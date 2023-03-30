@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -18,7 +19,8 @@ func gitDir(u *url.URL) (string, error) {
 		return "", errors.New("a forge URL should have at least a user and a project")
 	}
 	user := strings.TrimPrefix(pathSlice[1], "~")
-	return path.Join(os.Getenv("HOME"), "src", u.Host, user), nil
+	project := pathSlice[2]
+	return path.Join(os.Getenv("HOME"), "src", u.Host, user, project), nil
 }
 
 func main() {
@@ -35,11 +37,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("error parsing URL: %v", err)
 	}
-	err = os.MkdirAll(dir, 0755)
+	err = os.MkdirAll(filepath.Dir(dir), 0755)
 	if err != nil {
 		log.Fatalf("error %T creating directory: %v", err, err)
 	}
-	err = os.Chdir(dir)
+	err = os.Chdir(filepath.Dir(dir))
 	if err != nil {
 		log.Fatalf("error changing to directory %q: %v", dir, err)
 	}
