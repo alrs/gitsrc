@@ -18,8 +18,8 @@ func gitDir(u *url.URL) (string, error) {
 	if len(pathSlice) < 3 {
 		return "", errors.New("a forge URL should have at least a user and a project")
 	}
-	user := strings.TrimPrefix(pathSlice[1], "~")
-	project := pathSlice[2]
+	user := strings.ToLower(strings.TrimPrefix(pathSlice[1], "~"))
+	project := strings.ToLower(pathSlice[2])
 	return path.Join(os.Getenv("HOME"), "src", u.Host, user, project), nil
 }
 
