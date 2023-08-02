@@ -1,0 +1,9 @@
+srd builds a ~/src directory, with subdirectories for sources from different
+git forges.
+
+My usage in bash is:
+
+cd `srd https://github.com/alrs/srd`
+
+This checks out the project at https://github.com/alrs/srd and changes to that
+directory created under ~/src/github.com/alrs/srd.
