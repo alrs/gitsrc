@@ -20,6 +20,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net/url"
@@ -30,7 +31,7 @@ import (
 	"strings"
 )
 
-func gitDir(u *url.URL) (string, error) {
+func gitDir(u *url.URL, root string) (string, error) {
 	cleanPath := path.Clean(u.Path)
 	pathSlice := strings.Split(cleanPath, "/")
 	if len(pathSlice) < 3 {
@@ -38,20 +39,27 @@ func gitDir(u *url.URL) (string, error) {
 	}
 	user := strings.ToLower(strings.TrimPrefix(pathSlice[1], "~"))
 	project := strings.ToLower(pathSlice[2])
-	return path.Join(os.Getenv("HOME"), "src", u.Host, user, project), nil
+	return path.Join(root, u.Host, user, project), nil
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	var root string
+	flag.StringVar(
+		&root, "root",
+		path.Join(os.Getenv("HOME"), "src"),
+		"root path to clone projects",
+	)
+	flag.Parse()
+	if len(flag.Args()) < 1 {
 		log.Fatal("requires a git URL as an argument")
 	}
 
-	arg := os.Args[1]
+	arg := flag.Args()[0]
 	u, err := url.Parse(arg)
 	if err != nil {
 		log.Fatalf("error %T parsing url: %v", err, err)
 	}
-	dir, err := gitDir(u)
+	dir, err := gitDir(u, root)
 	if err != nil {
 		log.Fatalf("error parsing URL: %v", err)
 	}
