@@ -63,7 +63,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error changing to directory %q: %v", dir, err)
 	}
-	clone := exec.Command("git", "clone", u.String())
+	clone := exec.Command("git", "clone", u.String(), strings.ToLower(path.Base(dir)))
 	// the only thing we want to go to stdout is the full path of
 	// the git repo
 	clone.Stdout = os.Stderr
