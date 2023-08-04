@@ -5,6 +5,20 @@ import (
 	"testing"
 )
 
+func TestErrShortURL(t *testing.T) {
+	// fail on truncated url
+	u, err := url.Parse("https://example.com/insufficient")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(u)
+	_, _, err = paths(u)
+	_, ok := err.(ErrShortURL)
+	if !ok {
+		t.Fatalf("err should be ErrShortUrl, got %T", err)
+	}
+}
+
 func TestPaths(t *testing.T) {
 	gotExp := "got:%v expected:%v"
 
@@ -48,16 +62,5 @@ func TestPaths(t *testing.T) {
 		if gitP != c.gitPath {
 			t.Fatalf(gotExp, gitP, gitP)
 		}
-	}
-
-	// fail on truncated url
-	u, err := url.Parse("https://example.com/insufficient")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(u)
-	_, _, err = paths(u)
-	if err == nil {
-		t.Fatalf("%v should have caused error, got nil", u.String())
 	}
 }
