@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -31,15 +30,28 @@ import (
 	"strings"
 )
 
-func gitDir(u *url.URL, root string) (string, error) {
+type ErrShortURL struct{}
+
+func (e ErrShortURL) Error() string {
+	return fmt.Sprint("a forge URL should have at least a user and a project")
+}
+
+func paths(u *url.URL) (*url.URL, string, error) {
 	cleanPath := path.Clean(u.Path)
 	pathSlice := strings.Split(cleanPath, "/")
 	if len(pathSlice) < 3 {
-		return "", errors.New("a forge URL should have at least a user and a project")
+		return u, "", ErrShortURL{}
 	}
-	user := strings.ToLower(strings.TrimPrefix(pathSlice[1], "~"))
-	project := strings.ToLower(pathSlice[2])
-	return path.Join(root, u.Host, user, project), nil
+	user := pathSlice[1]
+	project := pathSlice[2]
+	cleanUser := strings.ToLower(strings.TrimPrefix(user, "~"))
+	cleanProject := strings.ToLower(project)
+	gitDir := path.Join(u.Host, cleanUser, cleanProject)
+	var nu url.URL
+	nu.Scheme = u.Scheme
+	nu.Host = u.Host
+	nu.Path = path.Join(user, project)
+	return &nu, gitDir, nil
 }
 
 func main() {
@@ -59,10 +71,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("error %T parsing url: %v", err, err)
 	}
-	dir, err := gitDir(u, root)
+
+	gitUrl, relPath, err := paths(u)
 	if err != nil {
-		log.Fatalf("error parsing URL: %v", err)
+		log.Fatal(err)
 	}
+
+	dir := path.Join(root, relPath)
+
 	err = os.MkdirAll(filepath.Dir(dir), 0755)
 	if err != nil {
 		log.Fatalf("error %T creating directory: %v", err, err)
@@ -71,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error changing to directory %q: %v", dir, err)
 	}
-	clone := exec.Command("git", "clone", u.String(), strings.ToLower(path.Base(dir)))
+	clone := exec.Command("git", "clone", gitUrl.String(), strings.ToLower(path.Base(dir)))
 	// the only thing we want to go to stdout is the full path of
 	// the git repo
 	clone.Stdout = os.Stderr
